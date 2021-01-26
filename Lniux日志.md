@@ -1,3 +1,5 @@
+
+
 Jan 21 11:23:29 localhost su[28722]: pam_unix(su:auth): authentication failure; logname=ubuntu uid=500 euid=0 tty=/dev/pts/1 ruser=ubuntu rhost=  user=root
 Jan 21 11:23:32 localhost su[28722]: pam_authenticate: Authentication failure
 Jan 21 11:23:32 localhost su[28722]: FAILED su for root by ubuntu
@@ -27,3 +29,10 @@ nmap -p 873 --script rsync-brute --script-args 'rsync-brute.module=www' 192.168.
 
 验证NFS未授权漏洞：showmount -e ip
 
+
+
+
+
+![image-20210126084232275](/Users/ctwldnbiba0052/Library/Application Support/typora-user-images/image-20210126084232275.png)
+
+![image-20210126084300124](/Users/ctwldnbiba0052/Library/Application Support/typora-user-images/image-20210126084300124.png)
