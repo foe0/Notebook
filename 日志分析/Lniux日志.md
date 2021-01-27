@@ -32,7 +32,3 @@ nmap -p 873 --script rsync-brute --script-args 'rsync-brute.module=www' 192.168.
 
 
 
-
-![image-20210126084232275](/Users/ctwldnbiba0052/Library/Application Support/typora-user-images/image-20210126084232275.png)
-
-![image-20210126084300124](/Users/ctwldnbiba0052/Library/Application Support/typora-user-images/image-20210126084300124.png)
