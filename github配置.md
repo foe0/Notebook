@@ -1,8 +1,11 @@
 ssh-keygen -t rsa -C "stelen97@163.com"
 
-![image-20210125112642935](/Users/ctwldnbiba0052/Library/Application Support/typora-user-images/image-20210125112642935.png)
+![image-20210125112642935](./images/image-20210125112642935.png)
 
-
+初始化配置：
+λ git config --global user.name "foe0"
+λ git config --global user.email stelen97@163.com
+λ git remote add origin git地址
 
 # 操作方法：
 
