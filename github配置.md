@@ -3,8 +3,13 @@ ssh-keygen -t rsa -C "stelen97@163.com"
 ![image-20210125112642935](./images/image-20210125112642935.png)
 
 初始化配置：
-λ git config --global user.name "foe0"
-λ git config --global user.email stelen97@163.com
+λ git config --global user.name "name"
+λ git config --global user.email "email"
+ssh-keygen -t rsa -C "stelen97@163.com"
+cat c:\Users\Foe0\.ssh\id_rsa.pub
+ssh -T git@github.com
+
+
 λ git remote add origin git地址
 
 # 操作方法：
