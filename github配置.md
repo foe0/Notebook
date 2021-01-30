@@ -22,7 +22,7 @@ git pull 你的git地址
 参考链接：https://www.cnblogs.com/lyh233/p/12748737.html
 
 ![涉及到分支问题，也许是创建项目时弄的吗，其实我不太明白](./image/image-20210130180033294.png)
-./image/image-20210130180033294.png
+
 
 # 二 切换分支
 
@@ -30,7 +30,7 @@ git pull 你的git地址
 
 git checkout -b local origin/local
 
-![image-20210130180634457](./image\image-20210130180634457.png)
+![image-20210130180634457](./image/image-20210130180634457.png)
 
 查看当前分支：
 
