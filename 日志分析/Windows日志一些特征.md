@@ -24,3 +24,16 @@ sc create services binpath= "‪C:\Users\Test\Desktop\PSTools\PsExec.exe" type= 
 
 
 2.event_id = 4698
+
+
+
+# 类别：Other Object Access Events
+
+
+
+| 4702  计划任务已更新。 |      |
+| ---------------------- | ---- |
+|                        |      |
+|                        |      |
+|                        |      |
+
