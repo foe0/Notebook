@@ -91,3 +91,24 @@ git push --set-upstream origin <本地分支名>
 git commit -m ’‘
 
 git push origin master
+
+
+
+
+
+
+
+分支操作基础命令：
+
+```
+总结：
+查看分支：git branch
+创建分支：git branch <name>
+切换分支：git checkout <name>
+创建+切换分支：git checkout -b <name>
+合并某分支到当前分支：git merge <name>
+删除分支：git branch -d <name>
+```
+
+https://www.cnblogs.com/ithubb/p/13673529.html
+
