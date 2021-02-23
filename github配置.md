@@ -108,7 +108,11 @@ git push origin master
 创建+切换分支：git checkout -b <name>
 合并某分支到当前分支：git merge <name>
 删除分支：git branch -d <name>
+
+
+删除云端的master分支：git push origin --delete master
 ```
 
 https://www.cnblogs.com/ithubb/p/13673529.html
 
+git push origin --delete master
